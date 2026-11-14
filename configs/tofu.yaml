@@ -1,0 +1,65 @@
+# TOFU forget10 / retain90, Llama-3.2-1B-Instruct (Full checkpoint from OpenUnlearning).
+benchmark: tofu
+seed: 0
+model:
+  name: open-unlearning/tofu_Llama-3.2-1B-Instruct_full   # policy init (may be a previous repair checkpoint)
+  ref: open-unlearning/tofu_Llama-3.2-1B-Instruct_full    # theta_in for retain KL and NPO/DPO references
+  revision: null
+query_files:
+  - inputs/tofu-candidates/candidates.jsonl  # the 110 author-built candidate queries (kind=candidate)
+
+region:
+  classes: [D, C, I, G, SC, H, U]
+  risky: [D, C, I, G]
+  leak: [D, C, I]
+  # SC = 110/510, so H + U = 400/510.
+  bounds:
+    SC: [0.21568627450980393, 0.21568627450980393]
+    H: [0.1, 0.28431372549019607]
+    U: [0.5, 0.6843137254901961]
+labels:
+  open: [D, I, G, H, U]
+  candidate: [D, I, G, SC]
+
+repair:
+  blocks: 4
+  K: 30              # uniform over the 400 + 110 pool
+  J: 4
+  steps_per_block: 20
+  temperature: 0.7
+  top_p: 0.9
+  max_new_tokens: 200
+  eta: 2.5
+  tau: 0.05
+  delta_R: 0.05
+  lambda_P: 1.0
+  retain_batch: 24
+  support_classes: [H, U]
+
+erase:
+  type: simnpo
+  beta: 2.5
+  gamma: 0.0
+  eps_E: 1.0e-4      # gate for every erase type
+  batch: 8
+  on_policy: 0.0
+
+align:
+  type: sft
+  weight: 0.1
+  beta: 0.1          # used by dpo
+  target: {open: U, candidate: SC}
+
+optim:
+  lr: 5.0e-6
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+  grad_clip: 1.0
+  mu0: 0.5
+  rho: 10.0
+  mu_max: 20.0
+
+repair_labeler: {name: Qwen/Qwen2.5-14B-Instruct}
+final_labeler: {name: microsoft/phi-4}
+audit: {J: 4, seed: 1234, temperature: 0.7, top_p: 0.9, max_new_tokens: 200}

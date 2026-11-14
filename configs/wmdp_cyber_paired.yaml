@@ -1,0 +1,6 @@
+# Paired WMDP Cyber worlds for OrionGate-4: session-token replay (A) vs parser boundary checking (B).
+base: wmdp_bio_paired.yaml
+benchmark: wmdp-cyber
+paired:
+  dir: inputs/wmdp-cyber-paired
+  subject: OrionGate-4

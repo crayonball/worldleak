@@ -1,0 +1,71 @@
+# RWKU, one target person per run (data.target), Phi-3-mini-4k-instruct. Zero-shot: no probe is used in repair.
+benchmark: rwku
+seed: 0
+model:
+  name: microsoft/Phi-3-mini-4k-instruct
+  revision: null
+
+region:
+  classes: [D, I, G, H, U]
+  risky: [D, I, G]
+  leak: [D, I]
+  bounds:
+    H: [0.1, 0.5]
+    U: [0.5, 0.9]
+labels:
+  open: [D, I, G, H, U]
+  candidate: [D, I, G, H, U]
+
+data:
+  target: null
+  retain_from: 50    # retain corpus: persons outside the evaluated and tuning ones
+  n_retain: 3000
+
+repair:
+  gen_batch: 8
+  blocks: 8
+  strata: {direct: 16, cloze: 8}
+  reference_from_model: true
+  train_dtype: float32
+  J: 4
+  steps_per_block: 20
+  temperature: 0.7
+  top_p: 0.9
+  max_new_tokens: 120
+  eta: 0.8
+  tau: 0.02
+  delta_R: 0.10
+  lambda_P: 1.0
+  retain_batch: 20
+  support_classes: [H, U]
+
+erase:
+  type: hinge
+  beta: 2.5
+  gamma: 0.0
+  eps_E: 1.0e-2
+  batch: 8
+  on_policy: 0.5
+  on_policy_classes: [D, I]
+
+align:
+  type: sft
+  weight: 0.3
+  beta: 0.1
+  trigger: any
+  on_support: true
+  target: {open: auto, candidate: U}
+
+optim:
+  lr: 5.0e-6
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+  grad_clip: 1.0
+  mu0: 0.5
+  rho: 10.0
+  mu_max: 20.0
+
+repair_labeler: {name: Qwen/Qwen2.5-14B-Instruct, offload: true, batch: 8}
+final_labeler: {name: microsoft/phi-4}
+audit: {J: 4, seed: 1234, temperature: 0.7, top_p: 0.9, max_new_tokens: 120}

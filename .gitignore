@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+runs/
+inputs/
+*.safetensors
+*.bin
+# Only the selected examples are published
+results/*
+!results/examples/

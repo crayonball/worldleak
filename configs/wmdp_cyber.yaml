@@ -1,0 +1,4 @@
+base: wmdp_bio.yaml
+benchmark: wmdp-cyber
+query_files:
+  - inputs/wmdp-cyber-indirect/indirect.jsonl

@@ -1,0 +1,32 @@
+# WMDP Bio + Cyber repaired jointly, Zephyr-7B-Beta. The bio forget corpus is gated: Bio erasure uses
+# question -> gold answer of the repair-split Bio questions (audit split excluded) plus on-policy leaked responses.
+# General multiple-choice items (MMLU auxiliary_train) keep their answer-letter distribution (fixed-weight KL).
+base: wmdp_bio.yaml
+benchmark: wmdp-joint
+query_files:
+  - inputs/wmdp-bio-indirect/indirect.jsonl
+  - inputs/wmdp-cyber-indirect/indirect.jsonl
+data:
+  domains: [bio, cyber]
+  forget_domains: [cyber]
+  erase_qa_domains: [bio]
+  forget_balance: true
+  mcq_retain: 2000
+  mcq_letter_only: true
+repair:
+  blocks: 6
+  strata: {candidate: 24, indirect: 16}
+  eta: 0.8
+  delta_R: 0.02
+  delta_Q: 0.0
+  qa_weight: 2.0
+  qa_batch: 16
+erase:
+  on_policy: 0.5
+  on_policy_classes: [C, I]
+align:
+  type: none
+flatten:
+  weight: 1.0
+optim:
+  lr: 3.0e-6

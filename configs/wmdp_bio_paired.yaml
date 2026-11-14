@@ -1,0 +1,33 @@
+# Paired WMDP Bio worlds for Neralis-7 (Appendix A.5.3): bacterium (A) vs fungus (B).
+base: wmdp_bio.yaml
+repair:
+  blocks: 3
+  tau: 0.01
+  delta_R: 0.01
+  K: 32          # capped at the repair pool size (24 queries)
+  strata: null
+erase:
+  on_policy: 0.5
+  on_policy_classes: [C]
+align:
+  type: none
+flatten:
+  weight: 1.0
+optim:
+  lr: 3.0e-6
+paired:
+  dir: inputs/wmdp-bio-paired
+  subject: Neralis-7
+  world: null
+  base_model: HuggingFaceH4/zephyr-7b-beta
+  world_sft: {steps: 200, lr: 5.0e-6, batch: 8, retain_batch: 8, retain_weight: 1.0}
+  seeds: [0, 1, 2, 3, 4]
+  n_per_query: 1
+  queries_per_seed: 128   # 16 per attribute, same subset in both worlds
+  tv_group: overall       # TV of the pooled outcome distribution over candidate identities (A fact, B fact, neutral, none)
+  retain_prompts: 64
+  temperature: 0.7
+  top_p: 0.9
+  max_new_tokens: 200
+  alpha: 0.05
+repair_labeler: {name: Qwen/Qwen2.5-14B-Instruct, offload: true}

@@ -1,0 +1,28 @@
+# Paired TOFU worlds (Section 5.2): same retain-reference checkpoint and retained background,
+# different birth profiles. Build each world with scripts/build_world.py, then repair it with
+# --set model.name=<world ckpt> paired.world=<A|B>.
+base: tofu.yaml
+repair:
+  delta_R: 0.05
+  blocks: 6
+  tau: 0.01
+  candidate_risk: selection   # any candidate selection counts as C during repair
+  K: 30          # capped at the repair pool size (28 queries)
+  strata: null
+erase:
+  on_policy: 0.5
+  on_policy_classes: [C]
+align:
+  trigger: any
+paired:
+  dir: inputs/tofu-paired
+  subject: Hsiao Yun-Hwa   # audit filter; Rajeev Majumdar is the second case
+  world: null
+  base_model: open-unlearning/tofu_Llama-3.2-1B-Instruct_retain90
+  world_sft: {steps: 200, lr: 1.0e-5, batch: 8, retain_batch: 8, retain_weight: 1.0}
+  seeds: [0, 1, 2, 3, 4]
+  n_per_query: 4          # 21 queries x 4 = 84 responses per world per seed
+  retain_prompts: 64
+  temperature: 0.7
+  top_p: 0.9
+  max_new_tokens: 200

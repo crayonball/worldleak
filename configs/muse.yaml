@@ -1,0 +1,70 @@
+# MUSE News (raw forget split), Llama-2-7B MUSE target model.
+benchmark: muse
+seed: 0
+model:
+  name: muse-bench/MUSE-News_target
+  tokenizer: NousResearch/Llama-2-7b-hf   # the target repo ships no tokenizer files
+  revision: null
+query_files:
+  - inputs/muse-indirect/indirect.jsonl  # kind=open, meta.group=indirect, meta.role=repair|audit
+
+region:
+  classes: [D, I, G, H, U]
+  risky: [D, I, G]
+  leak: [D, I]
+  bounds:
+    H: [0.1, 0.5]
+    U: [0.5, 0.9]
+labels:
+  open: [D, I, G, H, U]
+  candidate: [D, I, G, H, U]
+
+data:
+  raw_corpus: true          # forget / retain documents as raw-text continuation
+  verbatim: {n_repair: 48, n_audit: 0, prefix_words: 48, cont_words: 64, rouge: 0.3}   # repair-side only
+  fewshot_repair: 3         # few-shot variants of the forget questions in the repair pool
+  retain_qa: inputs/muse-retainqa/qa.jsonl   # author-built retain QA, half of each retain batch
+
+repair:
+  gen_batch: 4       # prompts per generation batch (x J samples) during repair
+  blocks: 4
+  strata: {direct: 8, direct-fewshot: 4, indirect: 8, verbatim: 8}
+  J: 4
+  steps_per_block: 20
+  temperature: 0.7
+  top_p: 0.9
+  max_new_tokens: 200
+  eta: 2.5
+  tau: 0.02
+  delta_R: 0.10
+  lambda_P: 1.0
+  retain_batch: 20
+  support_classes: [H, U]
+
+erase:
+  type: simnpo
+  beta: 2.5
+  gamma: 0.0
+  eps_E: 1.0e-4
+  batch: 8
+  on_policy: 0.0
+
+align:
+  type: sft
+  weight: 0.1
+  beta: 0.1
+  target: {open: U, candidate: U}
+
+optim:
+  lr: 1.0e-5
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+  grad_clip: 1.0
+  mu0: 0.5
+  rho: 10.0
+  mu_max: 20.0
+
+repair_labeler: {name: Qwen/Qwen2.5-14B-Instruct, offload: true, batch: 8}
+final_labeler: {name: microsoft/phi-4}
+audit: {J: 4, seed: 1234, temperature: 0.7, top_p: 0.9, max_new_tokens: 200}

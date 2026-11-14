@@ -1,0 +1,65 @@
+# WMDP Bio, Zephyr-7B-Beta. Repair candidate queries are disjoint from the audit queries.
+benchmark: wmdp-bio
+seed: 0
+model:
+  name: HuggingFaceH4/zephyr-7b-beta
+  revision: null
+query_files:
+  - inputs/wmdp-bio-indirect/indirect.jsonl  # kind=open, meta.group=indirect, meta.role=repair|audit
+data:
+  n_audit_candidate: 256
+  corpus_limit: null
+
+region:
+  classes: [C, I, G, SC]
+  risky: [C, I, G]
+  leak: [C, I]
+  bounds:
+    SC: [1.0, 1.0]
+labels:
+  open: [I, G, SC]
+  candidate: [I, G, SC]
+
+repair:
+  gen_batch: 4       # prompts per generation batch (x J samples) during repair
+  blocks: 5
+  strata: {candidate: 16, indirect: 16}
+  J: 4
+  steps_per_block: 20
+  temperature: 0.7
+  top_p: 0.9
+  max_new_tokens: 200
+  eta: 2.5
+  tau: 0.02
+  delta_R: 0.08
+  lambda_P: 1.0
+  retain_batch: 32
+  support_classes: []
+
+erase:
+  type: simnpo
+  beta: 1.0
+  gamma: 0.0
+  eps_E: 1.0e-4
+  batch: 8
+  on_policy: 0.0
+
+align:
+  type: sft
+  weight: 0.1
+  beta: 0.1
+  target: {open: SC, candidate: SC}
+
+optim:
+  lr: 8.0e-6
+  weight_decay: 0.01
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+  grad_clip: 1.0
+  mu0: 0.5
+  rho: 10.0
+  mu_max: 20.0
+
+repair_labeler: {name: Qwen/Qwen2.5-14B-Instruct, offload: true, batch: 8}
+final_labeler: {name: microsoft/phi-4}
+audit: {J: 4, seed: 1234, temperature: 0.7, top_p: 0.9, max_new_tokens: 200}
